@@ -9,7 +9,7 @@ class ImageApp:
     def __init__(self, root):
         self.root = root
         self.root.title("Редактор изображений OpenCV")
-        self.root.geometry("1100x700")
+        self.root.geometry("1100x800")
 
         # Оригинальное и текущее изображения (в формате OpenCV / BGR)
         self.orig_img = None
@@ -53,7 +53,8 @@ class ImageApp:
         ttk.Separator(control_panel, orient='horizontal').pack(fill=tk.X, pady=10)
 
         # Блок яркости
-        ttk.Label(control_panel, text="4. Понизить яркость:", font=('Arial', 10, 'bold')).pack(anchor=tk.W, pady=5)
+        ttk.Label(control_panel, text="4. Понизить яркость: \n(диапазон значений \n от 0 до 255)",
+                  font=('Arial', 10, 'bold')).pack(anchor=tk.W, pady=5)
         bright_frame = ttk.Frame(control_panel)
         bright_frame.pack(fill=tk.X)
         ttk.Label(bright_frame, text="Значение:").pack(side=tk.LEFT)
@@ -61,47 +62,47 @@ class ImageApp:
         self.bright_entry.pack(side=tk.LEFT, padx=5)
         ttk.Button(control_panel, text="Уменьшить яркость", command=self.decrease_brightness).pack(fill=tk.X, pady=5)
 
+
         ttk.Separator(control_panel, orient='horizontal').pack(fill=tk.X, pady=10)
 
         # Блок рисования прямоугольника
         ttk.Label(control_panel, text="5. Синий прямоугольник:", font=('Arial', 10, 'bold')).pack(anchor=tk.W, pady=5)
         rect_frame = ttk.Frame(control_panel)
         rect_frame.pack(fill=tk.X)
-        ttk.Label(rect_frame, text="X1:").grid(row=0, column=0)
+        ttk.Label(rect_frame, text="Координаты первого угла: ").grid(row=0, column=0, columnspan=4, sticky=tk.W)
+        ttk.Label(rect_frame, text="X1:").grid(row=1, column=0)
         self.x1_entry = ttk.Entry(rect_frame, width=5)
-        self.x1_entry.grid(row=0, column=1, padx=2)
-        ttk.Label(rect_frame, text="Y1:").grid(row=0, column=2)
+        self.x1_entry.grid(row=1, column=1, padx=2)
+        ttk.Label(rect_frame, text="Y1:").grid(row=1, column=2)
         self.y1_entry = ttk.Entry(rect_frame, width=5)
-        self.y1_entry.grid(row=0, column=3, padx=2)
+        self.y1_entry.grid(row=1, column=3, padx=2)
 
-        ttk.Label(rect_frame, text="X2:").grid(row=1, column=0, pady=5)
+        ttk.Label(rect_frame, text="Координаты угла по диагонали: ").grid(row=2, column=0, columnspan=4, sticky=tk.W)
+        ttk.Label(rect_frame, text="X2:").grid(row=3, column=0, pady=5)
         self.x2_entry = ttk.Entry(rect_frame, width=5)
-        self.x2_entry.grid(row=1, column=1, padx=2, pady=5)
-        ttk.Label(rect_frame, text="Y2:").grid(row=1, column=2, pady=5)
+        self.x2_entry.grid(row=3, column=1, padx=2, pady=5)
+        ttk.Label(rect_frame, text="Y2:").grid(row=3, column=2, pady=5)
         self.y2_entry = ttk.Entry(rect_frame, width=5)
-        self.y2_entry.grid(row=1, column=3, padx=2, pady=5)
+        self.y2_entry.grid(row=3, column=3, padx=2, pady=5)
 
         ttk.Button(control_panel, text="Нарисовать", command=self.draw_rectangle).pack(fill=tk.X, pady=5)
 
         ttk.Button(control_panel, text="Сбросить изменения", command=self.reset_image).pack(fill=tk.X, pady=20)
 
+        # --- Нижняя строка состояния (Отклик приложения) ---
+        self.status_var = tk.StringVar(value="Статус: Ожидание действий пользователя...")
+        status_bar = ttk.Label(control_panel, textvariable=self.status_var, relief=tk.SUNKEN, anchor=tk.W, padding=5, width=50)
+        status_bar.pack(side=tk.BOTTOM, fill=tk.X)
+
         # --- Правая панель просмотра ---
         self.preview_panel = ttk.LabelFrame(self.root, text=" Просмотр изображения ", padding=10)
         self.preview_panel.pack(side=tk.RIGHT, fill=tk.BOTH, expand=True, padx=10, pady=10)
 
-        self.image_label = ttk.Label(self.preview_panel, text="Изображение не загружено")
+        self.image_label = ttk.Label(self.preview_panel, text="Изображение не загружено", anchor="center")
         self.image_label.pack(fill=tk.BOTH, expand=True)
-
-        # --- Нижняя строка состояния (Отклик приложения) ---
-        self.status_var = tk.StringVar(value="Статус: Ожидание действий пользователя...")
-        status_bar = ttk.Label(self.root, textvariable=self.status_var, relief=tk.SUNKEN, anchor=tk.W, padding=5)
-        status_bar.pack(side=tk.BOTTOM, fill=tk.X)
 
     # 1. Загрузка файла
     def load_file(self):
-        from tkinter import filedialog
-        import numpy as np
-        import cv2
 
         # 1. Открываем диалоговое окно выбора файла
         file_path = filedialog.askopenfilename(
@@ -151,6 +152,9 @@ class ImageApp:
             messagebox.showerror("Ошибка камеры", error_msg)
             self.set_status("Ошибка: Веб-камера недоступна.")
             return
+        # Даем камере "подготовится" для качественного финального снимка
+        for _ in range(5):
+            cap.read()
 
         ret, frame = cap.read()
         cap.release()
@@ -160,7 +164,7 @@ class ImageApp:
             self.set_status("Ошибка: Кадр не захвачен.")
             return
 
-        self.orig_img = frame
+        self.orig_img = frame.copy()
         self.current_img = frame.copy()
         self.channel_var.set("Оригинал")
         self.update_view()
@@ -314,7 +318,6 @@ class ImageApp:
 
 
 if __name__ == "__main__":
-    import tkinter as tk
 
     root = tk.Tk()
     app = ImageApp(root)
