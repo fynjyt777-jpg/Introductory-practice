@@ -227,7 +227,6 @@ class ImageApp:
 
         final_hsv = cv2.merge((h, s, v))
         self.current_img = cv2.cvtColor(final_hsv, cv2.COLOR_HSV2BGR)
-
         self.update_view()
         self.set_status(f"Яркость уменьшена на {val}.")
 
@@ -257,6 +256,7 @@ class ImageApp:
 
         # В OpenCV цвет BGR. Синий цвет = (255, 0, 0). Толщина линии = 2 пикселя
         cv2.rectangle(self.current_img, (x1, y1), (x2, y2), (255, 0, 0), 2)
+
         self.update_view()
         self.set_status(f"Нарисован синий прямоугольник: ({x1}, {y1}) -> ({x2}, {y2}).")
 
