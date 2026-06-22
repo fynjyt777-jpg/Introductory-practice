@@ -98,6 +98,16 @@ class ImageApp:
         self.preview_panel = ttk.LabelFrame(self.root, text=" Просмотр изображения ", padding=10)
         self.preview_panel.pack(side=tk.RIGHT, fill=tk.BOTH, expand=True, padx=10, pady=10)
 
+        # Метка для вывода размера картинки
+        self.size_label = ttk.Label(
+            self.preview_panel, text="Размер: Файл не загружен", font=("Arial", 11)
+        )
+        self.size_label.pack(side=tk.TOP, anchor="w", pady=(0, 5))
+
+        # Виджет для самой картинки
+        # self.image_label = Label(self.root)
+        # self.image_label.pack()
+
         self.image_label = ttk.Label(self.preview_panel, text="Изображение не загружено", anchor="center")
         self.image_label.pack(fill=tk.BOTH, expand=True)
 
@@ -270,7 +280,7 @@ class ImageApp:
         # 2. Исправляем опечатку и копируем оригинал
         self.current_img = self.orig_img.copy()
 
-        # 3. Сбрасываем фильтр в интерфейсе (если у вас Combobox)
+        # 3. Сбрасываем фильтр в интерфейсе
         if hasattr(self, 'channel_var'):
             self.channel_var.set("Оригинал")
 
@@ -283,7 +293,13 @@ class ImageApp:
         if self.current_img is None:
             return
 
-        # 1. Выделяем нужный канал на лету для демонстрации
+        # 1. Извлекаем реальные размеры матрицы
+        img_h, img_w = self.current_img.shape[:2]
+
+        # 2. Обновляем текст в интерфейсе
+        self.size_label.configure(text=f"Размер: {img_w} x {img_h} px")
+
+        # 3. Выделяем нужный канал на лету для демонстрации
         display_img = self.current_img.copy()
         channel = self.channel_var.get()
 
@@ -299,15 +315,15 @@ class ImageApp:
             elif channel == "Синий":
                 display_img = cv2.merge([b, zeros, zeros])
 
-        # 2. Конвертируем BGR (OpenCV) в RGB (Pillow/Tkinter)
+        # 4. Конвертируем BGR (OpenCV) в RGB (Pillow/Tkinter)
         rgb_img = cv2.cvtColor(display_img, cv2.COLOR_BGR2RGB)
         pil_img = Image.fromarray(rgb_img)
 
-        # 3. Умное масштабирование превью, чтобы большая картинка не ломала интерфейс
+        # 5. Умное масштабирование превью, чтобы большая картинка не ломала интерфейс
         max_w, max_h = 750, 600
         pil_img.thumbnail((max_w, max_h), Image.Resampling.LANCZOS)
 
-        # 4. Вывод в интерфейс
+        # 6. Вывод в интерфейс
         tk_img = ImageTk.PhotoImage(image=pil_img)
         self.image_label.configure(image=tk_img, text="")
         self.image_label.image = tk_img  # сохраняем ссылку, чтобы сборщик мусора её не удалил
